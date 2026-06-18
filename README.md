@@ -107,7 +107,7 @@ curl -X POST http://127.0.0.1:8000/predict \
 
 ## Pluggable data sources
 
-- **Weather** uses [Open-Meteo](https://open-meteo.com) (free, no API key) and works out of the box.
+- **Weather** uses [Open-Meteo](https://open-meteo.com) and works out of the box.
 - **Satellite NDVI** is pluggable — add your provider (Sentinel Hub, Google Earth Engine, etc.)
   in `folianet/features/satellite.py`.
 
