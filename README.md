@@ -144,4 +144,4 @@ pytest -q
 
 ## License
 
-MIT — see [LICENSE](LICENSE) (add your name).
+MIT — see [LICENSE](LICENSE) (Grace Fokam).
