@@ -11,8 +11,8 @@ crop image plus location, date, and environmental/satellite context and returns 
 
 - Identifies the likely stressor from a leaf image using a transfer-learning CNN
   (EfficientNet-B0, PyTorch).
-- Scores disease risk by fusing the image prediction with environmental context —
-  temperature, humidity, leaf-wetness, rainfall, and satellite NDVI.
+- Scores disease risk by fusing the image prediction with environmental context 
+  (temperature, humidity, leaf-wetness, rainfall, and satellite NDVI).
 - Reports a confidence level alongside every prediction.
 - Recommends a next action tailored to the detected stressor and risk level.
 - Serves over HTTP via a FastAPI endpoint, ready to drop into a product or app.
