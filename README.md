@@ -28,8 +28,8 @@ crop image plus location, date, and environmental/satellite context and returns 
 
 FoliaNet combines two complementary signals:
 
-1. **Image branch** — a fine-tuned CNN produces disease-class probabilities from a leaf photo.
-2. **Environmental branch** — weather and satellite NDVI for the field's location and date
+1. **Image branch**: a fine-tuned CNN produces disease-class probabilities from a leaf photo.
+2. **Environmental branch**: weather and satellite NDVI for the field's location and date
    are converted into a per-disease favorability index using agronomic rules.
 
 These are fused into the final risk score, confidence level, likely stressor, and
@@ -108,7 +108,7 @@ curl -X POST http://127.0.0.1:8000/predict \
 ## Pluggable data sources
 
 - **Weather** uses [Open-Meteo](https://open-meteo.com) and works out of the box.
-- **Satellite NDVI** is pluggable — add your provider (Sentinel Hub, Google Earth Engine, etc.)
+- **Satellite NDVI** is pluggable; add your provider (Sentinel Hub, Google Earth Engine, etc.)
   in `folianet/features/satellite.py`.
 
 ## Project layout
