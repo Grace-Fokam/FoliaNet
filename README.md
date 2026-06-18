@@ -1,6 +1,6 @@
 # FoliaNet 🌽🌾
 
-AI crop disease detection for **corn and wheat fungal diseases**. FoliaNet takes a
+AI crop disease detection for corn and wheat fungal diseases. FoliaNet takes a
 crop image plus location, date, and environmental/satellite context and returns a
 **risk score**, a **confidence level**, the **likely stressor**, and a
 **recommended next action** in a single call.
@@ -9,13 +9,13 @@ crop image plus location, date, and environmental/satellite context and returns 
 
 ## What it does
 
-- **Identifies the likely stressor** from a leaf image using a transfer-learning CNN
+- Identifies the likely stressor from a leaf image using a transfer-learning CNN
   (EfficientNet-B0, PyTorch).
-- **Scores disease risk** by fusing the image prediction with environmental context —
+- Scores disease risk by fusing the image prediction with environmental context —
   temperature, humidity, leaf-wetness, rainfall, and satellite NDVI.
-- **Reports a confidence level** alongside every prediction.
-- **Recommends a next action** tailored to the detected stressor and risk level.
-- **Serves over HTTP** via a FastAPI endpoint, ready to drop into a product or app.
+- Reports a confidence level alongside every prediction.
+- Recommends a next action tailored to the detected stressor and risk level.
+- Serves over HTTP via a FastAPI endpoint, ready to drop into a product or app.
 
 ## How it works
 
@@ -29,13 +29,13 @@ crop image plus location, date, and environmental/satellite context and returns 
 
 FoliaNet combines two complementary signals:
 
-1. **Image branch** — a fine-tuned CNN produces disease-class probabilities from a leaf photo.
-2. **Environmental branch** — weather and satellite NDVI for the field's location and date
+1. **Image branch**: a fine-tuned CNN produces disease-class probabilities from a leaf photo.
+2. **Environmental branch**: weather and satellite NDVI for the field's location and date
    are converted into a per-disease favorability index using agronomic rules.
 
 These are fused into the final risk score, confidence level, likely stressor, and
 recommended action. The model also supports **early fusion** (joint image + tabular
-training) — set `model.tabular_dim > 0` once you have paired data.
+training) set `model.tabular_dim > 0` once you have paired data.
 
 ---
 
@@ -108,8 +108,8 @@ curl -X POST http://127.0.0.1:8000/predict \
 
 ## Pluggable data sources
 
-- **Weather** uses [Open-Meteo](https://open-meteo.com) (free, no API key) and works out of the box.
-- **Satellite NDVI** is pluggable — add your provider (Sentinel Hub, Google Earth Engine, etc.)
+- Weather uses [Open-Meteo](https://open-meteo.com) and works out of the box.
+- Satellite NDVI is pluggable; add your provider (Sentinel Hub, Google Earth Engine, etc.)
   in `folianet/features/satellite.py`.
 
 ## Project layout
@@ -135,7 +135,7 @@ tests/test_logic.py      unit tests (pytest)
 pytest -q
 ```
 
-## Responsible use
+## Disclaimer
 
 - FoliaNet is an advisory tool that supports scouting decisions; follow local agronomy /
   extension guidance for treatment timing, rates, and product choice.
@@ -144,4 +144,4 @@ pytest -q
 
 ## License
 
-MIT — see [LICENSE](LICENSE). © Grace Fokam.
+MIT [LICENSE](LICENSE). © Grace Fokam.
