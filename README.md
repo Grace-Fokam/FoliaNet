@@ -9,12 +9,12 @@ crop image plus location, date, and environmental/satellite context and returns 
 
 ## What it does
 
-- **Identifies the likely stressor** from a leaf image using a transfer-learning CNN
+- Identifies the likely stressor from a leaf image using a transfer-learning CNN
   (EfficientNet-B0, PyTorch).
-- **Scores disease risk** by fusing the image prediction with environmental context (temperature, humidity, leaf-wetness, rainfall, and satellite NDVI).
-- **Reports a confidence level** alongside every prediction.
-- **Recommends a next action** tailored to the detected stressor and risk level.
-- **Serves over HTTP** via a FastAPI endpoint, ready to drop into a product or app.
+- Scores disease risk by fusing the image prediction with environmental context (temperature, humidity, leaf-wetness, rainfall, and satellite NDVI).
+- Reports a confidence level alongside every prediction.
+- Recommends a next action tailored to the detected stressor and risk level.
+- Serves over HTTP via a FastAPI endpoint, ready to drop into a product or app.
 
 ## How it works
 
@@ -107,8 +107,8 @@ curl -X POST http://127.0.0.1:8000/predict \
 
 ## Pluggable data sources
 
-- **Weather** uses [Open-Meteo](https://open-meteo.com) and works out of the box.
-- **Satellite NDVI** is pluggable; add your provider (Sentinel Hub, Google Earth Engine, etc.)
+- Weather uses [Open-Meteo](https://open-meteo.com) and works out of the box.
+- Satellite NDVI is pluggable; add your provider (Sentinel Hub, Google Earth Engine, etc.)
   in `folianet/features/satellite.py`.
 
 ## Project layout
@@ -134,7 +134,7 @@ tests/test_logic.py      unit tests (pytest)
 pytest -q
 ```
 
-## Responsible use
+## Disclaimer
 
 - FoliaNet is an advisory tool that supports scouting decisions; follow local agronomy /
   extension guidance for treatment timing, rates, and product choice.
