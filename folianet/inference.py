@@ -20,6 +20,7 @@ from PIL import Image
 import torch
 import torch.nn.functional as F
 
+from folianet.context import environmental_context
 from folianet.diseases import get_disease
 from folianet.features.weather import fetch_weather
 from folianet.features.satellite import fetch_ndvi
@@ -48,6 +49,8 @@ class FoliaNetPredictor:
                  env_weight: float = 0.4, device: Optional[str] = None):
         self.device = device or ("cuda" if torch.cuda.is_available() else "cpu")
         ckpt = torch.load(checkpoint_path, map_location=self.device)
+        if ckpt.get("tabular_dim", 0) != 0:
+            raise ValueError("Current predictor supports image-only checkpoints (tabular_dim=0).")
         self.classes = ckpt["classes"]
         self.img_size = ckpt.get("img_size", 224)
         self.model = FusionModel(
@@ -93,10 +96,11 @@ class FoliaNetPredictor:
         # ---- environmental context (late fusion) ----
         weather = fetch_weather(lat, lon, obs_date)
         sat = fetch_ndvi(lat, lon, obs_date)
-        ndvi = ndvi_override if ndvi_override is not None else sat.ndvi
-        fav_map = crop_favorability(weather, top.crop, ndvi=ndvi)
+        context = environmental_context(weather, sat, ndvi_override)
+        ndvi = context["ndvi"]
+        fav_map = crop_favorability(weather, top.crop, ndvi=context["usable_ndvi"])
         env_favorability = float(fav_map.get(top.key, 0.0))
-        env_available = weather.data_available or sat.data_available
+        env_available = context["available"]
 
         # ---- fuse ----
         if env_available:
@@ -121,6 +125,8 @@ class FoliaNetPredictor:
         band, action = recommend_action(top.key, top.is_healthy, risk)
 
         return {
+            "mode": "trained_model",
+            "is_prediction": True,
             "risk_score": round(float(risk), 4),
             "risk_score_pct": round(float(risk) * 100, 1),
             "risk_band": band,
@@ -144,10 +150,8 @@ class FoliaNetPredictor:
                 "weather": {k: round(v, 3) if isinstance(v, float) else v
                             for k, v in asdict(weather).items()},
                 "ndvi": round(float(ndvi), 3),
-                "data_sources": {
-                    "weather": weather.data_available,
-                    "satellite": sat.data_available,
-                },
+                "data_sources": context["data_sources"],
+                "provenance": context["provenance"],
                 "fusion_weights": {"image": w_img, "environment": w_env},
                 "model_version": MODEL_VERSION,
             },

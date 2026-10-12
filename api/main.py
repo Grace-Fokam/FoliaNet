@@ -1,63 +1,72 @@
-"""
-FoliaNet API.
+"""FoliaNet API. Run `uvicorn api.main:app --reload`; see README for modes."""
 
-Run:
-    uvicorn api.main:app --reload
-
-Configure the checkpoint via the FOLIANET_CHECKPOINT env var
-(default: checkpoints/folianet_best.pt).
-
-POST /predict  (multipart/form-data):
-    image: file (required)
-    lat:   float (required)
-    lon:   float (required)
-    date:  YYYY-MM-DD (required)
-    ndvi:  float (optional override)
-"""
-
-import io
+from datetime import date as Date
+import logging
 import os
 
 from fastapi import FastAPI, File, Form, UploadFile, HTTPException
-from PIL import Image
+from PIL import Image, UnidentifiedImageError
 
+from folianet.example import example_response
+
+logger = logging.getLogger(__name__)
 app = FastAPI(title="FoliaNet", version="0.1.0",
-              description="AI crop disease detection for corn & wheat fungal diseases.")
-
+              description="Crop disease inference with a separate illustrative /example.")
 _predictor = None
 
 
 def get_predictor():
     global _predictor
     if _predictor is None:
-        # Imported lazily so /health works even before torch/model are ready.
-        from folianet.inference import FoliaNetPredictor
         ckpt = os.environ.get("FOLIANET_CHECKPOINT", "checkpoints/folianet_best.pt")
-        if not os.path.exists(ckpt):
-            raise HTTPException(503, f"Model checkpoint not found at '{ckpt}'. Train first.")
-        _predictor = FoliaNetPredictor(ckpt)
+        # Check before importing torch: a missing checkpoint has the same response
+        # even in the lightweight demo installation.
+        if not os.path.isfile(ckpt):
+            raise HTTPException(503, "Model checkpoint unavailable. Train with "
+                                "python -m folianet.train --config configs/default.yaml "
+                                "or set FOLIANET_CHECKPOINT to a trusted compatible checkpoint. "
+                                "GET /example provides illustrative output only.")
+        try:
+            from folianet.inference import FoliaNetPredictor
+            predictor = FoliaNetPredictor(ckpt)
+        except Exception:
+            logger.exception("Unable to initialize FoliaNet predictor")
+            raise HTTPException(503, "Model could not be loaded. Check server logs, "
+                                "ML dependencies, and checkpoint compatibility.") from None
+        _predictor = predictor
     return _predictor
 
 
 @app.get("/health")
 def health():
+    """Liveness only; does not load or validate a checkpoint."""
     return {"status": "ok", "service": "folianet"}
 
 
+@app.get("/example", summary="Illustrative response — no model inference")
+def example():
+    """Fixed offline fixture. Does not accept an image or call data providers."""
+    return example_response()
+
+
 @app.post("/predict")
-async def predict(
+def predict(
     image: UploadFile = File(...),
-    lat: float = Form(...),
-    lon: float = Form(...),
-    date: str = Form(...),
-    ndvi: float = Form(None),
+    lat: float = Form(..., ge=-90, le=90, allow_inf_nan=False),
+    lon: float = Form(..., ge=-180, le=180, allow_inf_nan=False),
+    date: Date = Form(...),
+    ndvi: float | None = Form(None, ge=-1, le=1, allow_inf_nan=False),
 ):
     try:
-        img = Image.open(io.BytesIO(await image.read()))
-    except Exception:
-        raise HTTPException(400, "Could not read the uploaded image.")
+        # Decode inside the error boundary; Image.open alone only reads headers.
+        with Image.open(image.file) as uploaded:
+            uploaded.load()
+            img = uploaded.convert("RGB")
+    except (UnidentifiedImageError, OSError, ValueError, Image.DecompressionBombError):
+        raise HTTPException(400, "Could not read the uploaded image.") from None
     predictor = get_predictor()
     try:
         return predictor.predict(img, lat=lat, lon=lon, obs_date=date, ndvi_override=ndvi)
-    except Exception as e:
-        raise HTTPException(500, f"Prediction failed: {e}")
+    except Exception:
+        logger.exception("FoliaNet prediction failed")
+        raise HTTPException(500, "Prediction failed. Check server logs for details.") from None
