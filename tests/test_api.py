@@ -1,4 +1,4 @@
-"""Exercise actual HTTP routing with an offline fixture and controlled predictor."""
+"""Test the API using the made-up example and a stand-in predictor."""
 
 import builtins
 import io
@@ -48,7 +48,7 @@ def test_example_and_health_do_not_import_ml_or_call_network(client, monkeypatch
     assert body["is_prediction"] is False
     assert body["details"]["model_version"] is None
     assert body["details"]["data_sources"] == {"weather": False, "satellite": False}
-    assert "Hand-authored" in body["notice"]
+    assert "made-up example, not a prediction" in body["notice"]
     assert sum(body["details"]["class_probabilities"].values()) == pytest.approx(1)
     assert body == client.get("/example").json()
     assert post(client).status_code == 503

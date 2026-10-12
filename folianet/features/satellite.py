@@ -1,16 +1,11 @@
-"""
-Satellite-derived vegetation index (NDVI) for FoliaNet.
+"""The NDVI data source is still a placeholder.
 
-Real NDVI retrieval needs an authenticated provider (Sentinel Hub, Google Earth
-Engine, Planet, etc.), so this module ships a *documented stub*: a stable
-`fetch_ndvi()` interface plus a deterministic synthetic value so the pipeline
-runs end-to-end today. Wire your provider into `_fetch_real_ndvi()` and the rest
-of FoliaNet picks it up automatically.
+NDVI describes how green or dense vegetation is. This file currently returns
+repeatable made-up values with data_available=False. The predictor does not
+use these values to adjust disease scores.
 
-Suggested integrations:
-  - Sentinel Hub Statistical API  (https://docs.sentinel-hub.com)
-  - Google Earth Engine  (ee.ImageCollection('COPERNICUS/S2_SR'))
-"""
+To use real data, add a source in _fetch_real_ndvi(). Possible sources include
+Sentinel Hub (https://docs.sentinel-hub.com) and Google Earth Engine."""
 
 from dataclasses import dataclass
 from datetime import date, datetime
@@ -39,11 +34,10 @@ def _synthetic_ndvi(lat: float, lon: float, target: date) -> float:
 
 
 def _fetch_real_ndvi(lat: float, lon: float, target: date) -> Optional[float]:
-    """TODO: implement with your satellite provider. Return None if unavailable.
+    """Add a satellite data source here. Return None if no data is available.
 
-    Example (Sentinel Hub Statistical API): request a small bbox around (lat, lon)
-    for a date window, evalscript computing (B08 - B04) / (B08 + B04), and return
-    the mean. Keep credentials in environment variables, never in code.
+    For example, Sentinel Hub can return NDVI for a small area around the
+    coordinates. Keep any API keys in environment variables, not in this file.
     """
     return None
 

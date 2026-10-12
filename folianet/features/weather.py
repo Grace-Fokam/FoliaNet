@@ -1,14 +1,10 @@
-"""
-Weather features for FoliaNet.
+"""Get recent weather from Open-Meteo for a location and date.
 
-Uses Open-Meteo (free, no API key) to pull the trailing weather window for a
-location/date and derive the features the environmental-risk module needs:
-mean temperature, mean humidity, 7-day precipitation, a leaf-wetness proxy, and
-growing-degree-days. If the network call fails, a deterministic synthetic
-fallback is returned with `data_available=False` so the pipeline never breaks.
+The code calculates temperature, humidity, rain, estimated leaf wetness, and
+growing-degree-days. If the request fails, it returns repeatable made-up values
+and sets data_available=False. Those values are not real weather observations.
 
-Docs: https://open-meteo.com/en/docs  (archive + forecast endpoints)
-"""
+API docs: https://open-meteo.com/en/docs"""
 
 from datetime import date, datetime, timedelta
 from typing import Union
@@ -31,7 +27,7 @@ def _to_date(d: Union[str, date, datetime]) -> date:
 
 
 def _synthetic(lat: float, lon: float, target: date) -> WeatherFeatures:
-    """Deterministic pseudo-weather so demos/tests run with no network."""
+    """Make repeatable fallback values when real weather is unavailable."""
     seed = int(hashlib.sha256(f"{lat:.2f}{lon:.2f}{target}".encode()).hexdigest(), 16)
     r = (seed % 1000) / 1000.0
     temp = 12 + 18 * r                     # 12..30 C
@@ -48,7 +44,7 @@ def fetch_weather(
     target_date: Union[str, date, datetime],
     window_days: int = 7,
 ) -> WeatherFeatures:
-    """Fetch and aggregate the trailing weather window ending on `target_date`."""
+    """Get recent weather ending on target_date and calculate the averages."""
     target = _to_date(target_date)
     start = target - timedelta(days=window_days)
 
@@ -77,15 +73,15 @@ def fetch_weather(
         temp_mean = sum(temps) / len(temps)
         hum_mean = sum(hums) / len(hums)
         precip_total = sum(precs)
-        # Leaf-wetness proxy: hours with RH >= 90% or measurable precip.
+        # Estimate wet hours from humidity of at least 90% or rain.
         wetness = sum(
             1 for i in range(min(len(hums), len(precs)))
             if hums[i] >= 90 or precs[i] > 0.1
         )
-        # GDD from daily mean temps (approx via hourly mean per day).
+        # Estimate growing-degree-days from the average temperature.
         gdd = max(0.0, temp_mean - GDD_BASE_C) * window_days
         return WeatherFeatures(temp_mean, hum_mean, precip_total, float(wetness), gdd, True)
 
     except Exception:
-        # Network down, no `requests`, bad response, etc. -> safe fallback.
+        # If the request fails, return labeled made-up weather.
         return _synthetic(lat, lon, target)

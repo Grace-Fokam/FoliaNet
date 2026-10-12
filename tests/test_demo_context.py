@@ -1,4 +1,4 @@
-"""Offline fixture and real/synthetic/override fusion policy regressions."""
+"""Test the example and the rules for real, made-up, and user-supplied data."""
 
 import json
 import subprocess

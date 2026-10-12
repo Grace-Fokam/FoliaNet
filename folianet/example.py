@@ -1,4 +1,4 @@
-"""Offline response fixture. No image, trained model, or provider is evaluated."""
+"""A made-up API response. No image, model, or data service is used."""
 
 import json
 
@@ -7,15 +7,16 @@ from folianet.recommend import recommend_action
 
 
 def example_response() -> dict:
-    """Return a fresh, explicitly illustrative prediction-shaped response."""
+    """Return a new copy of the made-up response."""
     disease = get_disease("Corn_(maize)___Cercospora_leaf_spot Gray_leaf_spot")
-    risk = 0.7  # Hand-authored illustration, not a computed prediction.
+    risk = 0.7  # Made-up value, not a model prediction.
     band, action = recommend_action(disease.key, False, risk)
     return {
         "mode": "illustrative_example",
         "is_prediction": False,
-        "notice": "Hand-authored example only. No image analyzed, checkpoint loaded, "
-                  "or weather/satellite data retrieved. Do not use for field decisions.",
+        "notice": "This is a made-up example, not a prediction. No photo was checked, "
+                  "no trained model was loaded, and no weather or satellite data was "
+                  "downloaded. Do not use it to make decisions about a crop.",
         "risk_score": risk,
         "risk_score_pct": 70.0,
         "risk_band": band,

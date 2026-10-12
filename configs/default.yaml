@@ -2,10 +2,9 @@ project: FoliaNet
 seed: 42
 
 data:
-  # Directory whose immediate subfolders are class folders (ImageFolder layout).
+  # Folder containing one image folder for each disease or healthy class.
   root: data/crop_images
-  # Keyword filter on class-folder names — train on a subset of crops without
-  # moving files. Add or remove crops here.
+  # Only include image folders with these crop names.
   crops: ["Corn", "Wheat"]
   img_size: 224
   val_split: 0.15
@@ -15,8 +14,7 @@ data:
 model:
   backbone: efficientnet_b0    # or "resnet18"
   pretrained: true
-  # 0 = image-only (use when training images have no paired tabular data). Set > 0
-  # only when you have paired image+environmental training data for early fusion.
+  # Keep this at 0. The current trainer and predictor only pass images.
   tabular_dim: 0
   dropout: 0.3
 
@@ -26,7 +24,8 @@ train:
   weight_decay: 0.0001
   checkpoint_dir: checkpoints
 
-# Late-fusion blend used at inference (image disease prob vs. environmental favorability).
+# Default weights for combining image and weather scores.
+# The current predictor uses its own defaults; it does not read this section.
 fusion:
   image_weight: 0.6
   env_weight: 0.4

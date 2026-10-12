@@ -1,8 +1,8 @@
-"""Provenance and fusion policy, independent of the ML stack."""
+"""Track where the weather and NDVI came from and which values can be used."""
 
 
 def environmental_context(weather, satellite, ndvi_override=None):
-    """Only retrieved weather can enable favorability; synthetic NDVI is unused."""
+    """Use real weather for scoring and leave out made-up NDVI."""
     ndvi = ndvi_override if ndvi_override is not None else satellite.ndvi
     ndvi_source = ("user_override_unverified" if ndvi_override is not None
                    else satellite.source)

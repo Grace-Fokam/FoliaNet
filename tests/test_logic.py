@@ -1,4 +1,4 @@
-"""Tests for FoliaNet's torch-free logic (run with `pytest`)."""
+"""Test the disease rules and advice without PyTorch. Run python -m pytest."""
 
 from folianet.diseases import DISEASES, get_disease
 from folianet.features.environment import (

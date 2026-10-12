@@ -1,7 +1,7 @@
 {
   "mode": "illustrative_example",
   "is_prediction": false,
-  "notice": "Hand-authored example only. No image analyzed, checkpoint loaded, or weather/satellite data retrieved. Do not use for field decisions.",
+  "notice": "This is a made-up example, not a prediction. No photo was checked, no trained model was loaded, and no weather or satellite data was downloaded. Do not use it to make decisions about a crop.",
   "risk_score": 0.7,
   "risk_score_pct": 70.0,
   "risk_band": "high",

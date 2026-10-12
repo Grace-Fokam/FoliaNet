@@ -1,15 +1,10 @@
-"""
-FoliaNet model.
+"""The image classifier, with an optional branch for extra inputs.
 
-A multimodal classifier: a pretrained image backbone plus an OPTIONAL tabular
-branch (environmental/satellite features), merged in a fusion head.
+With tabular_dim=0, the model only uses images. Weather is added to the final
+risk score later in folianet/inference.py.
 
-  - tabular_dim == 0  -> image-only (use when training images have no paired
-    weather/location data). At inference, environmental signals are blended in via
-    late fusion in folianet/inference.py.
-  - tabular_dim  > 0  -> true early fusion, for when you have paired image+tabular
-    training data. The forward pass concatenates the tabular embedding.
-"""
+With tabular_dim>0, the model also needs extra input values. The current trainer
+and predictor do not pass those values, so keep tabular_dim=0 for now."""
 
 import torch
 import torch.nn as nn
