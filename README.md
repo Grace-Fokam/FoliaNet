@@ -154,6 +154,11 @@ It includes:
 `details.model_version` is the code version. It doesn't identify a specific
 trained checkpoint or tell you how well that checkpoint was tested.
 
+`likely_stressor` selects the highest-probability non-healthy class whenever
+one exists, even if a healthy class is the image model's top result. It names a
+candidate disease to inspect; it does not establish that disease is present.
+Check the healthy class probabilities and risk score alongside this field.
+
 If something goes wrong, the API returns these status codes:
 
 | Code | What it means |

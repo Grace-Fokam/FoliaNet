@@ -9,6 +9,7 @@ API docs: https://open-meteo.com/en/docs"""
 from datetime import date, datetime, timedelta
 from typing import Union
 import hashlib
+import math
 
 from folianet.features.environment import WeatherFeatures
 
@@ -46,7 +47,10 @@ def fetch_weather(
 ) -> WeatherFeatures:
     """Get recent weather ending on target_date and calculate the averages."""
     target = _to_date(target_date)
-    start = target - timedelta(days=window_days)
+    if window_days < 1:
+        raise ValueError("window_days must be positive")
+    # Open-Meteo includes both start_date and end_date.
+    start = target - timedelta(days=window_days - 1)
 
     try:
         import requests  # imported lazily so the package loads without it
@@ -64,11 +68,16 @@ def fetch_weather(
         resp = requests.get(url, params=params, timeout=15)
         resp.raise_for_status()
         hourly = resp.json().get("hourly", {})
-        temps = [t for t in hourly.get("temperature_2m", []) if t is not None]
-        hums = [h for h in hourly.get("relative_humidity_2m", []) if h is not None]
-        precs = [p for p in hourly.get("precipitation", []) if p is not None]
-        if not temps or not hums:
-            raise ValueError("empty weather response")
+        temps = hourly.get("temperature_2m", [])
+        hums = hourly.get("relative_humidity_2m", [])
+        precs = hourly.get("precipitation", [])
+        # Missing or mismatched hours cannot support a complete window.
+        # Do not silently turn missing rain into zero or shift hourly pairs.
+        if not temps or len(temps) != len(hums) or len(temps) != len(precs):
+            raise ValueError("incomplete weather response")
+        if any(v is None or not math.isfinite(v) for series in (temps, hums, precs)
+               for v in series):
+            raise ValueError("invalid weather values")
 
         temp_mean = sum(temps) / len(temps)
         hum_mean = sum(hums) / len(hums)
