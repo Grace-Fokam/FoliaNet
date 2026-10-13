@@ -1,16 +1,8 @@
-"""
-Disease metadata for FoliaNet.
+"""Corn and wheat disease names, pathogens, and scoring rules.
 
-Each entry is keyed by the dataset class-folder name.
-`favorability` parameters drive the agronomic environmental-risk module in
-`folianet/features/environment.py`. They are *heuristics* drawn from general
-plant-pathology guidance (warm, humid, extended-leaf-wetness conditions favor
-these foliar fungi) and are meant to be tuned against your own field data.
-
-Classes are configured by crop. To add a crop or disease, register an entry
-keyed by its class-folder name; training, inference, and recommendations pick it
-up automatically.
-"""
+Each entry uses the same name as its training-image folder. The rules describe
+conditions that can favor disease. They are rough estimates and need to be
+tested on your own field data. Add an entry here when adding a new disease."""
 
 from dataclasses import dataclass, field
 from typing import Dict
@@ -18,7 +10,7 @@ from typing import Dict
 
 @dataclass(frozen=True)
 class Favorability:
-    """Simple agronomic suitability window for a foliar fungal disease."""
+    """Temperature, humidity, and wetness ranges used to score a disease."""
     t_min: float          # below this temp (C), little development
     t_opt_low: float      # lower bound of optimal temp band
     t_opt_high: float     # upper bound of optimal temp band
@@ -107,10 +99,10 @@ DISEASES: Dict[str, Disease] = {
 
 
 def get_disease(class_name: str) -> Disease:
-    """Look up disease metadata, tolerating unknown classes gracefully."""
+    """Look up a disease, or build a basic entry if its name is missing."""
     if class_name in DISEASES:
         return DISEASES[class_name]
-    # Fallback for classes not yet registered: infer crop, treat as unknown stressor.
+    # For an unknown class, guess the crop from its name and use default rules.
     crop = "Wheat" if "wheat" in class_name.lower() else "Corn"
     healthy = "healthy" in class_name.lower()
     return Disease(

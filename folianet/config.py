@@ -1,4 +1,4 @@
-"""Tiny YAML config loader with attribute access."""
+"""Read the YAML settings so the code can use names like cfg.data.root."""
 
 from types import SimpleNamespace
 from pathlib import Path

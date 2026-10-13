@@ -1,0 +1,55 @@
+{
+  "mode": "illustrative_example",
+  "is_prediction": false,
+  "notice": "This is a made-up example, not a prediction. No photo was checked, no trained model was loaded, and no weather or satellite data was downloaded. Do not use it to make decisions about a crop.",
+  "risk_score": 0.7,
+  "risk_score_pct": 70.0,
+  "risk_band": "high",
+  "confidence": {
+    "score": 0.75,
+    "level": "high"
+  },
+  "likely_stressor": {
+    "name": "Gray leaf spot",
+    "pathogen": "Cercospora zeae-maydis",
+    "crop": "Corn",
+    "healthy": false
+  },
+  "recommended_action": "High pressure. Prioritize scouting now; for susceptible hybrids consider a triazole/strobilurin application at VT-R1, and weigh resistant hybrids next season. (Advisory only \u2014 confirm with a local agronomist/extension service before acting.)",
+  "details": {
+    "image_disease_probability": 0.8,
+    "environmental_favorability": 0.55,
+    "class_probabilities": {
+      "Corn_(maize)___Cercospora_leaf_spot Gray_leaf_spot": 0.7,
+      "Corn_(maize)___Common_rust_": 0.05,
+      "Corn_(maize)___Northern_Leaf_Blight": 0.05,
+      "Corn_(maize)___healthy": 0.2
+    },
+    "weather": {
+      "temp_mean_c": 26.0,
+      "humidity_mean_pct": 90.0,
+      "precip_7d_mm": 20.0,
+      "leaf_wetness_hours": 12.0,
+      "gdd": 112.0,
+      "data_available": false
+    },
+    "ndvi": 0.62,
+    "data_sources": {
+      "weather": false,
+      "satellite": false
+    },
+    "fusion_weights": {
+      "image": 0.6,
+      "environment": 0.4
+    },
+    "model_version": null,
+    "provenance": {
+      "image": "hand_authored_example_no_image_analyzed",
+      "weather": "hand_authored_example_not_retrieved",
+      "ndvi": "hand_authored_example_not_retrieved",
+      "scores": "hand_authored_example_not_model_outputs",
+      "recommendation": "existing_rule_based_advisory_text",
+      "fusion_weights": "illustrative_only_not_executed"
+    }
+  }
+}

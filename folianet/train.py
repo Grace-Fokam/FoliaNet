@@ -1,11 +1,8 @@
-"""
-Train the FoliaNet image classifier on an ImageFolder-style dataset.
+"""Train the image classifier using labeled images in separate class folders.
 
-    python -m folianet.train --config configs/default.yaml
+Run: python -m folianet.train --config configs/default.yaml
 
-Saves a checkpoint containing the model weights AND the class list + metadata, so
-inference stays consistent without re-specifying classes.
-"""
+The saved checkpoint includes the weights, class names, and model settings."""
 
 import argparse
 import random
