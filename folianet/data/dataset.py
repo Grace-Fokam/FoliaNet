@@ -1,18 +1,10 @@
-"""
-ImageFolder-style dataset for FoliaNet.
+"""Load training images from folders named after each disease or healthy class.
 
-Point `root` at a directory whose immediate subfolders are class folders, e.g.:
+For example, root can be data/crop_images, with folders such as
+Corn_(maize)___Common_rust_ and Corn_(maize)___healthy inside it.
 
-    data/crop_images/
-        Corn_(maize)___Common_rust_/
-        Corn_(maize)___Northern_Leaf_Blight/
-        Corn_(maize)___healthy/
-        ...
-
-`crops` is a list of keywords (e.g. ["Corn", "Wheat"]); only class folders whose
-names contain one of those keywords are included, so you can keep a multi-crop
-dataset on disk and train on a subset just by editing the config.
-"""
+The crops setting filters these folder names by words like Corn or Wheat.
+You can change that setting without moving the images."""
 
 from pathlib import Path
 from typing import List, Tuple
@@ -71,8 +63,7 @@ class CropDiseaseDataset(Dataset):
             for f in d.rglob("*"):
                 if f.suffix.lower() in _EXTS:
                     self.samples.append((f, idx))
-        # Deterministic order so a train/val index split is reproducible across
-        # two dataset instances (one per transform).
+        # Keep image order the same when loading the training and validation sets.
         self.samples.sort(key=lambda s: str(s[0]))
         if not self.samples:
             raise RuntimeError(f"No images found under matching class folders in '{root}'.")

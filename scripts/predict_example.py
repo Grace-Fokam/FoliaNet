@@ -1,9 +1,8 @@
-"""
-Run a single FoliaNet prediction from the command line.
+"""Run one prediction using a trained checkpoint.
 
-    python scripts/predict_example.py --image path/to/leaf.jpg \
-        --lat 40.0 --lon -88.2 --date 2024-07-15
-"""
+From the repo folder:
+    python -m scripts.predict_example --image path/to/leaf.jpg \
+        --lat 40.0 --lon -88.2 --date 2024-07-15"""
 
 import argparse
 import json

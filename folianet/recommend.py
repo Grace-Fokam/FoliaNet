@@ -1,11 +1,8 @@
-"""
-Recommendation layer: maps (stressor, risk band) -> a recommended next action.
+"""Choose advice based on the disease and risk band.
 
-These are advisory, extension-style messages. They are intentionally general;
-real fungicide timing, rates, and product choice depend on local regulations,
-hybrid/variety susceptibility, and growth stage. Always defer to a local
-agronomist / extension service. Pure Python -> unit testable.
-"""
+These are general suggestions. Treatment timing, products, and rates depend on
+the crop, growth stage, and local rules. Check with an agronomist or extension
+service before acting. This file runs without PyTorch."""
 
 from typing import Tuple
 
@@ -20,7 +17,7 @@ def risk_band(score: float) -> str:
     return HIGH
 
 
-# Per-stressor action text by band. Keyed by Disease.key.
+# Advice for each disease and risk band. Uses Disease.key.
 _ACTIONS = {
     "corn_gray_leaf_spot": {
         LOW: "Conditions are not currently favorable. Continue routine scouting of the lower-mid canopy.",

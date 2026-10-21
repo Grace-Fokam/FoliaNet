@@ -1,13 +1,8 @@
-"""
-Agronomic environmental-risk module.
+"""Estimate how favorable the weather is for each disease.
 
-Turns weather + satellite features into a 0..1 "favorability" index per disease.
-This is deliberately transparent and rule-based (no learned weights) so it stays
-interpretable and runs even before you have any field-labeled risk data. Tune the
-parameters in `folianet/diseases.py` against your own observations.
-
-Pure Python / no torch -> unit testable.
-"""
+The score goes from 0 to 1 and uses simple rules, not a trained model.
+You can adjust the rules in folianet/diseases.py after testing them on field data.
+This file runs without PyTorch."""
 
 from dataclasses import dataclass
 from typing import Dict, Optional
@@ -26,7 +21,7 @@ class WeatherFeatures:
 
 
 def _temperature_suitability(temp: float, fav: Favorability) -> float:
-    """Trapezoidal suitability: 0 outside [t_min, t_max], 1 across the optimal band."""
+    """Score temperature: 0 outside the allowed range, 1 in the best range."""
     if temp <= fav.t_min or temp >= fav.t_max:
         return 0.0
     if fav.t_opt_low <= temp <= fav.t_opt_high:
@@ -52,14 +47,14 @@ def _wetness_factor(wetness_hours: float, fav: Favorability) -> float:
 
 
 def disease_favorability(weather: WeatherFeatures, disease: Disease) -> float:
-    """Combine temperature, humidity, and leaf-wetness terms into a 0..1 index."""
+    """Use temperature, humidity, and wetness to return a score from 0 to 1."""
     if disease.is_healthy:
         return 0.0
     fav = disease.favorability
     t = _temperature_suitability(weather.temp_mean_c, fav)
     h = _humidity_factor(weather.humidity_mean_pct, fav)
     w = _wetness_factor(weather.leaf_wetness_hours, fav)
-    # Temperature is necessary; humidity and wetness reinforce each other.
+    # Temperature sets the limit; humidity and wetness add to the score.
     score = t * (0.5 * h + 0.5 * w)
     return float(max(0.0, min(score, 1.0)))
 
@@ -69,10 +64,10 @@ def crop_favorability(
     crop: str,
     ndvi: Optional[float] = None,
 ) -> Dict[str, float]:
-    """Favorability for every (non-healthy) disease of a crop.
+    """Score the conditions for each disease of the crop.
 
-    A low NDVI (sparse/stressed canopy) nudges favorability up slightly, since
-    stressed crops are generally more susceptible. NDVI is optional.
+    Optional NDVI slightly adjusts the score. Lower NDVI raises it.
+    This is a simple rule that needs testing on field data.
     """
     canopy_modifier = 1.0
     if ndvi is not None:
