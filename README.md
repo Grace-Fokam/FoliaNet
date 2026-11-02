@@ -11,6 +11,29 @@ EfficientNet-B0, and the API uses FastAPI.
 The original code was developed in September 2023. This reformatted version was
 published in June 2026.
 
+## Original results (2023)
+
+Grace Fokam's reported results from the original FoliaNet work describe a
+dataset of approximately **26,000 labeled crop images**, **94% classification
+accuracy**, and a **28% reduction in prediction time**. These are historical
+project figures. This public release does not independently verify or reproduce
+them.
+
+- **Accuracy:** The 26K figure describes the reported dataset size. It is not a
+  documented test-set size. The original evaluation-set size, train/validation/test
+  split, and method used to separate the images are not included in this repo.
+  The current training code defaults to an 85/15 training/validation split with
+  no separate test set, but that does not establish how the 2023 result was measured.
+- **Prediction time:** The original baseline implementation, before-and-after
+  timings, hardware, and timing procedure are not included in this repo. The
+  reported 28% reduction therefore cannot be checked against a documented
+  comparison here.
+
+The original trained weights, images, evaluation logs, and timing records are
+not included. The example below is an illustration of the response format and
+is not evidence for these figures. The historical results do not establish
+verified accuracy or field performance for a model trained from this release.
+
 ## Try the example first
 
 This repo doesn't include a trained model or the training images. You can still
