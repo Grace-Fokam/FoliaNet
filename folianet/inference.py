@@ -1,8 +1,7 @@
-"""Run a trained image model and put the prediction response together.
+"""Runs the trained model and builds the prediction response.
 
-The response includes an estimated risk, confidence, possible disease, and
-a suggestion for what to check next. Real weather can adjust the image score.
-Made-up weather and NDVI are labeled and do not affect the final risk score."""
+Real weather can adjust the image score. Fake fallback weather and NDVI are
+labeled and left out of the score."""
 
 from dataclasses import asdict
 from datetime import date
@@ -26,7 +25,7 @@ MODEL_VERSION = "folianet-0.1.0"
 
 
 def _entropy_confidence(probs: torch.Tensor) -> float:
-    """Score from 0 to 1: higher when the class probabilities are less spread out."""
+    """0 to 1. Higher when the model is more sure of one class."""
     p = probs.clamp_min(1e-9)
     ent = -(p * p.log()).sum().item()
     max_ent = math.log(len(p))
@@ -43,7 +42,7 @@ class FoliaNetPredictor:
         self.device = device or ("cuda" if torch.cuda.is_available() else "cpu")
         ckpt = torch.load(checkpoint_path, map_location=self.device)
         if ckpt.get("tabular_dim", 0) != 0:
-            raise ValueError("This predictor needs an image-only checkpoint with tabular_dim=0.")
+            raise ValueError("Checkpoint must have tabular_dim=0 (image only).")
         self.classes = ckpt["classes"]
         self.img_size = ckpt.get("img_size", 224)
         self.model = FusionModel(
@@ -75,18 +74,18 @@ class FoliaNetPredictor:
             image = Image.open(image)
         probs = self._image_probs(image)
 
-        # Read the image model results.
+        # How much of the image score is disease vs healthy.
         diseases = [get_disease(c) for c in self.classes]
         healthy_mass = sum(float(probs[i]) for i, d in enumerate(diseases) if d.is_healthy)
         image_disease_prob = 1.0 - healthy_mass
 
-        # Pick the most likely disease class, leaving out healthy classes.
+        # Top disease class, skipping healthy ones.
         disease_idxs = [i for i, d in enumerate(diseases) if not d.is_healthy]
         top_idx = max(disease_idxs, key=lambda i: float(probs[i])) if disease_idxs \
             else int(probs.argmax())
         top = diseases[top_idx]
 
-        # Get the weather and NDVI and check where they came from.
+        # Get weather and NDVI, and note where they came from.
         weather = fetch_weather(lat, lon, obs_date)
         sat = fetch_ndvi(lat, lon, obs_date)
         context = environmental_context(weather, sat, ndvi_override)
@@ -95,25 +94,24 @@ class FoliaNetPredictor:
         env_favorability = float(fav_map.get(top.key, 0.0))
         env_available = context["available"]
 
-        # Combine the image and weather scores.
+        # Mix the image and weather scores.
         if env_available:
             w_img, w_env = self.image_weight, self.env_weight
         else:
-            # Without real weather, use only the image score.
+            # No real weather, so just use the image.
             w_img, w_env = 1.0, 0.0
         denom = w_img + w_env
         risk = (w_img * image_disease_prob + w_env * env_favorability) / denom
 
-        # If the chosen class is healthy, cap risk at the image disease score.
+        # Healthy pick: don't let risk go above the image's disease score.
         if top.is_healthy:
             risk = min(risk, image_disease_prob)
 
-        # Estimate confidence.
         model_conf = float(probs[top_idx]) if not _is_healthy_pred(probs, diseases) \
             else healthy_mass
         confidence = 0.5 * model_conf + 0.5 * _entropy_confidence(probs)
         if not env_available:
-            confidence *= 0.85  # Lower confidence when real weather is missing.
+            confidence *= 0.85  # Less sure without real weather.
 
         band, action = recommend_action(top.key, top.is_healthy, risk)
 

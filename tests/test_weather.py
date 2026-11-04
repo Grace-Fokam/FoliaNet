@@ -1,4 +1,4 @@
-"""Weather aggregation checks using HTTP fixtures, never live downloads."""
+"""Weather tests with fake responses (no real network calls)."""
 
 from datetime import date
 import sys

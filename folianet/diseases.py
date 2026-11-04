@@ -1,8 +1,7 @@
-"""Corn and wheat disease names, pathogens, and scoring rules.
+"""Corn and wheat diseases and the weather each one likes.
 
-Each entry uses the same name as its training-image folder. The rules describe
-conditions that can favor disease. They are rough estimates and need to be
-tested on your own field data. Add an entry here when adding a new disease."""
+Keys match the training image folder names. The weather ranges are rough
+guesses, so test them on real field data. Add new diseases here."""
 
 from dataclasses import dataclass, field
 from typing import Dict
@@ -10,13 +9,13 @@ from typing import Dict
 
 @dataclass(frozen=True)
 class Favorability:
-    """Temperature, humidity, and wetness ranges used to score a disease."""
-    t_min: float          # below this temp (C), little development
-    t_opt_low: float      # lower bound of optimal temp band
-    t_opt_high: float     # upper bound of optimal temp band
-    t_max: float          # above this temp, little development
-    humidity_min: float   # RH (%) below which risk is suppressed
-    wetness_hours: float  # leaf-wetness hours that saturate the wetness term
+    """Temperature, humidity, and wetness ranges for one disease."""
+    t_min: float          # too cold below this (C)
+    t_opt_low: float      # best temp range starts here
+    t_opt_high: float     # best temp range ends here
+    t_max: float          # too hot above this
+    humidity_min: float   # too dry below this humidity (%)
+    wetness_hours: float  # wet hours needed for max wetness score
 
 
 _DEFAULT_FAVORABILITY = Favorability(15, 22, 28, 35, 75, 12)
@@ -24,15 +23,15 @@ _DEFAULT_FAVORABILITY = Favorability(15, 22, 28, 35, 75, 12)
 
 @dataclass(frozen=True)
 class Disease:
-    key: str              # stable short id
-    crop: str             # "Corn" | "Wheat"
-    display_name: str     # human-readable stressor name
-    pathogen: str         # causal organism
+    key: str              # short id
+    crop: str             # "Corn" or "Wheat"
+    display_name: str     # readable name
+    pathogen: str         # what causes it
     is_healthy: bool = False
     favorability: Favorability = field(default_factory=lambda: _DEFAULT_FAVORABILITY)
 
 
-# Keyed by dataset class-folder name.
+# Keyed by image folder name.
 DISEASES: Dict[str, Disease] = {
     # ---- Corn / maize ----
     "Corn_(maize)___Cercospora_leaf_spot Gray_leaf_spot": Disease(
@@ -99,10 +98,10 @@ DISEASES: Dict[str, Disease] = {
 
 
 def get_disease(class_name: str) -> Disease:
-    """Look up a disease, or build a basic entry if its name is missing."""
+    """Look up a disease, or make a basic entry if it isn't listed."""
     if class_name in DISEASES:
         return DISEASES[class_name]
-    # For an unknown class, guess the crop from its name and use default rules.
+    # Unknown class: guess the crop from the name and use default rules.
     crop = "Wheat" if "wheat" in class_name.lower() else "Corn"
     healthy = "healthy" in class_name.lower()
     return Disease(

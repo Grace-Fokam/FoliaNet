@@ -1,9 +1,5 @@
-"""Show dataset setup steps or download a dataset from Kaggle.
+"""Prints setup steps, or downloads a dataset from Kaggle.
 
-Each disease or healthy class needs its own image folder. Set data.root in
-configs/default.yaml to the folder containing those class folders.
-
-For a Kaggle download:
     pip install kagglehub
     python -m folianet.data.download --kaggle <owner>/<dataset-slug>"""
 
@@ -11,19 +7,17 @@ import argparse
 
 INSTRUCTIONS = """
 Dataset setup:
-  1. Put your images in separate folders for each disease or healthy class, e.g.
+  1. Make one folder per class, named like the ones in folianet/diseases.py:
        <root>/Corn_(maize)___Common_rust_/*.jpg
        <root>/Corn_(maize)___healthy/*.jpg
-     Use the folder names listed in folianet/diseases.py. Add an entry there
-     if you want to include another disease.
-  2. Set data.root in configs/default.yaml to that <root> folder.
-  3. Set data.crops to the crops you want to include.
+  2. Set data.root in configs/default.yaml to <root>.
+  3. Set data.crops to the crops you want.
 """
 
 
 def main():
-    ap = argparse.ArgumentParser(description="Prepare a FoliaNet training dataset.")
-    ap.add_argument("--kaggle", help="Optional Kaggle dataset slug, e.g. owner/dataset-name")
+    ap = argparse.ArgumentParser(description="Set up a FoliaNet dataset.")
+    ap.add_argument("--kaggle", help="Kaggle dataset, like owner/dataset-name")
     args = ap.parse_args()
 
     if not args.kaggle:
@@ -34,9 +28,9 @@ def main():
         import kagglehub
         path = kagglehub.dataset_download(args.kaggle)
         print(f"Downloaded to: {path}")
-        print("Set data.root in configs/default.yaml to the folder containing your class folders.")
+        print("Now set data.root in configs/default.yaml to the class folders.")
     except Exception as e:
-        print(f"Download unavailable ({e}).")
+        print(f"Download failed ({e}).")
         print(INSTRUCTIONS)
 
 

@@ -1,10 +1,8 @@
-"""The image classifier, with an optional branch for extra inputs.
+"""The image classifier.
 
-With tabular_dim=0, the model only uses images. Weather is added to the final
-risk score later in folianet/inference.py.
-
-With tabular_dim>0, the model also needs extra input values. The current trainer
-and predictor do not pass those values, so keep tabular_dim=0 for now."""
+There's also an unfinished branch for extra inputs (tabular_dim > 0), but
+nothing passes those in yet, so keep tabular_dim=0. Weather gets mixed in
+later, in folianet/inference.py."""
 
 import torch
 import torch.nn as nn

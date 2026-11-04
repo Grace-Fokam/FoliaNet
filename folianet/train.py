@@ -1,8 +1,6 @@
-"""Train the image classifier using labeled images in separate class folders.
+"""Trains the image classifier on folders of labeled images.
 
-Run: python -m folianet.train --config configs/default.yaml
-
-The saved checkpoint includes the weights, class names, and model settings."""
+Run: python -m folianet.train --config configs/default.yaml"""
 
 import argparse
 import random

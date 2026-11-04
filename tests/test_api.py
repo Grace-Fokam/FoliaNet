@@ -1,4 +1,4 @@
-"""Test the API using the made-up example and a stand-in predictor."""
+"""API tests, using the fake example and a stand-in model."""
 
 import builtins
 import io

@@ -1,6 +1,4 @@
-"""The FoliaNet API. Start it with `python -m uvicorn api.main:app --reload`.
-
-Use /example to see made-up output or /predict to run a trained model."""
+"""FoliaNet API. Run: python -m uvicorn api.main:app --reload"""
 
 from datetime import date as Date
 import logging
@@ -13,7 +11,7 @@ from folianet.example import example_response
 
 logger = logging.getLogger(__name__)
 app = FastAPI(title="FoliaNet", version="0.1.0",
-              description="Check leaf photos with /predict or see made-up output at /example.")
+              description="Check a leaf photo with /predict, or see a fake example at /example.")
 _predictor = None
 
 
@@ -21,33 +19,30 @@ def get_predictor():
     global _predictor
     if _predictor is None:
         ckpt = os.environ.get("FOLIANET_CHECKPOINT", "checkpoints/folianet_best.pt")
-        # Check for the model file before importing PyTorch.
-        # This also works when only the demo requirements are installed.
+        # Check for the file first so this works without PyTorch installed.
         if not os.path.isfile(ckpt):
-            raise HTTPException(503, "No saved model file was found. Train with "
-                                "python -m folianet.train --config configs/default.yaml "
-                                "or set FOLIANET_CHECKPOINT to a trusted model file with matching settings. "
-                                "GET /example returns made-up output, not a prediction.")
+            raise HTTPException(503, "No model file found. Train one with "
+                                "python -m folianet.train or set FOLIANET_CHECKPOINT. "
+                                "(GET /example shows a fake response.)")
         try:
             from folianet.inference import FoliaNetPredictor
             predictor = FoliaNetPredictor(ckpt)
         except Exception:
-            logger.exception("Unable to initialize FoliaNet predictor")
-            raise HTTPException(503, "The model could not load. Check the server logs, installed "
-                                "packages, and saved model settings.") from None
+            logger.exception("Couldn't load the FoliaNet model")
+            raise HTTPException(503, "The model couldn't load. Check the server logs.") from None
         _predictor = predictor
     return _predictor
 
 
 @app.get("/health")
 def health():
-    """Check that the API is running. This does not check the model."""
+    """Is the server up? (Doesn't check the model.)"""
     return {"status": "ok", "service": "folianet"}
 
 
-@app.get("/example", summary="Made-up example, not a prediction")
+@app.get("/example", summary="Fake example, not a prediction")
 def example():
-    """Show a made-up response without checking a photo or downloading data."""
+    """A fake response so you can see the format."""
     return example_response()
 
 
@@ -60,7 +55,7 @@ def predict(
     ndvi: float | None = Form(None, ge=-1, le=1, allow_inf_nan=False),
 ):
     try:
-        # Read the whole image here so broken files return a clear error.
+        # Load the whole image now so a broken file gives a clean 400.
         with Image.open(image.file) as uploaded:
             uploaded.load()
             img = uploaded.convert("RGB")
@@ -71,4 +66,4 @@ def predict(
         return predictor.predict(img, lat=lat, lon=lon, obs_date=date, ndvi_override=ndvi)
     except Exception:
         logger.exception("FoliaNet prediction failed")
-        raise HTTPException(500, "Prediction failed. Check server logs for details.") from None
+        raise HTTPException(500, "Prediction failed. Check the server logs.") from None

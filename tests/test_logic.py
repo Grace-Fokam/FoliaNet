@@ -1,4 +1,4 @@
-"""Test the disease rules and advice without PyTorch. Run python -m pytest."""
+"""Disease rule and advice tests. No PyTorch needed."""
 
 from folianet.diseases import DISEASES, get_disease
 from folianet.features.environment import (

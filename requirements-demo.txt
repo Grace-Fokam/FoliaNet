@@ -1,4 +1,4 @@
-# Run the example API and tests without installing PyTorch.
+# Enough to run the example and tests without PyTorch.
 fastapi>=0.110
 uvicorn>=0.29
 python-multipart>=0.0.9

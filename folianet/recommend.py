@@ -1,8 +1,7 @@
-"""Choose advice based on the disease and risk band.
+"""Picks advice text for each disease and risk level.
 
-These are general suggestions. Treatment timing, products, and rates depend on
-the crop, growth stage, and local rules. Check with an agronomist or extension
-service before acting. This file runs without PyTorch."""
+These are general tips. The right treatment depends on the crop, growth stage,
+and local rules, so check with an agronomist first. No PyTorch needed."""
 
 from typing import Tuple
 
@@ -17,7 +16,7 @@ def risk_band(score: float) -> str:
     return HIGH
 
 
-# Advice for each disease and risk band. Uses Disease.key.
+# Advice per disease (by Disease.key) and risk band.
 _ACTIONS = {
     "corn_gray_leaf_spot": {
         LOW: "Conditions are not currently favorable. Continue routine scouting of the lower-mid canopy.",
@@ -63,7 +62,7 @@ _GENERIC = {
 }
 
 _DISCLAIMER = (
-    " (Advisory only — confirm with a local agronomist/extension service before acting.)"
+    " (Just a suggestion. Check with a local agronomist or extension service first.)"
 )
 
 

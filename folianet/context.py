@@ -1,8 +1,8 @@
-"""Track where the weather and NDVI came from and which values can be used."""
+"""Tracks where weather and NDVI came from and what can be used."""
 
 
 def environmental_context(weather, satellite, ndvi_override=None):
-    """Use real weather for scoring and leave out made-up NDVI."""
+    """Only real weather counts toward the score. Fake NDVI is skipped."""
     ndvi = ndvi_override if ndvi_override is not None else satellite.ndvi
     ndvi_source = ("user_override_unverified" if ndvi_override is not None
                    else satellite.source)

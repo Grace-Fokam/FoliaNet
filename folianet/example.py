@@ -1,4 +1,4 @@
-"""A made-up API response. No image, model, or data service is used."""
+"""A fake API response to show the format. Nothing real runs."""
 
 import json
 
@@ -7,16 +7,15 @@ from folianet.recommend import recommend_action
 
 
 def example_response() -> dict:
-    """Return a new copy of the made-up response."""
+    """Return a fresh copy of the fake response."""
     disease = get_disease("Corn_(maize)___Cercospora_leaf_spot Gray_leaf_spot")
-    risk = 0.7  # Made-up value, not a model prediction.
+    risk = 0.7  # Made up, not from a model.
     band, action = recommend_action(disease.key, False, risk)
     return {
         "mode": "illustrative_example",
         "is_prediction": False,
-        "notice": "This is a made-up example, not a prediction. No photo was checked, "
-                  "no trained model was loaded, and no weather or satellite data was "
-                  "downloaded. Do not use it to make decisions about a crop.",
+        "notice": "This is a made-up example, not a prediction. No photo, model, "
+                  "or real weather was used. Don't use it for crop decisions.",
         "risk_score": risk,
         "risk_score_pct": 70.0,
         "risk_band": band,

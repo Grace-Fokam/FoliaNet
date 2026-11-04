@@ -1,30 +1,25 @@
 # FoliaNet
 
-FoliaNet looks at photos of corn and wheat leaves to help check for possible
-fungal diseases. It also uses weather information to estimate how favorable the
-conditions are for a disease to develop.
+FoliaNet looks at photos of corn and wheat leaves and flags possible fungal
+diseases. It also checks the weather to see if conditions are good for that
+disease to spread.
 
-The result includes a risk score, a confidence score, a possible disease, and a
-suggestion for what to check next. The image model uses PyTorch and
-EfficientNet-B0, and the API uses FastAPI.
+You get back a risk score, a confidence score, the likely disease, and what to
+check next. Built with PyTorch (EfficientNet-B0) and FastAPI.
 
-The original code was developed in September 2023. This reformatted version was
-published in June 2026.
+I wrote the original in September 2023 and cleaned it up for GitHub in June 2026.
 
 ## Original results (2023)
 
-The original FoliaNet model was trained on about 26,000 labeled crop images and
-reached 94% classification accuracy. I also cut its prediction time by 28% so it
-could run on a small field device. The original weights, images, and evaluation
-logs aren’t in this repo, so these numbers can’t be reproduced from this code.
-This is a cleaned-up public version of the original project.
+The original model was trained on about 26,000 labeled crop images and hit 94%
+accuracy. I also made predictions 28% faster so it could run on a small field
+device. The original weights, images, and logs aren't in this repo, so you
+can't reproduce those numbers from this code.
 
-## Try the example first
+## Try the example
 
-This repo doesn't include a trained model or the training images. You can still
-see what an API response looks like in the [example JSON](examples/prediction-response.json).
-
-To run the example yourself, open a terminal in the repo folder:
+There's no trained model or dataset in the repo, but you can see what a response
+looks like in [the example JSON](examples/prediction-response.json), or run it:
 
 ```bash
 python -m venv .venv
@@ -33,110 +28,80 @@ pip install -r requirements-demo.txt
 python -m folianet.example
 ```
 
-You can also get the same example through the API:
+Or through the API:
 
 ```bash
 python -m uvicorn api.main:app --reload
+curl http://127.0.0.1:8000/example   # in another terminal
 ```
 
-Then open another terminal and run:
+**The example is made up.** It doesn't look at a photo, load a model, or pull any
+weather or satellite data. It's just there to show the format, so don't use it
+for real crop decisions. You can tell because it says `mode: "illustrative_example"`,
+`is_prediction: false`, and `model_version: null`.
 
-```bash
-curl http://127.0.0.1:8000/example
-```
+## How it works
 
-**The example is made up to show the response format.** It doesn't look at a
-photo, load a trained model, or download weather or satellite data. All of its
-numbers are example values. The advice comes from the project's existing rules.
-Don't use this example to make decisions about a crop.
+With a trained model, FoliaNet:
 
-The response says `mode: "illustrative_example"` and `is_prediction: false`.
-It also explains where each part comes from in `details.provenance`.
-`model_version` is `null` because no model was used.
+1. Runs the leaf photo through the image classifier.
+2. Gets the weather for your location and date.
+3. Checks the weather against simple rules for each disease.
+4. Combines the two into one risk score.
 
-## How predictions work
+The scores are rough estimates. A confidence of 0.8 doesn't mean an 80% chance
+of being right. Test it on your own data before trusting it.
 
-Once you have a trained model, FoliaNet:
+**Weather** comes from [Open-Meteo](https://open-meteo.com). If that fails, the
+code uses fake fallback weather, labels it, and scores with the image alone.
+Leaf wetness is guessed from humidity and rain, not measured.
 
-1. Runs a leaf photo through the image classifier.
-2. Looks up weather for the location and date you give it.
-3. Uses simple disease rules to check whether those conditions favor disease.
-4. Combines the image result with the weather score and returns a response.
+**NDVI** (a measure of how green and dense plants are) is still a placeholder
+that returns fake values, which aren't used in the score. You can plug in a real
+source in `folianet/features/satellite.py` or pass your own with `ndvi`. Values
+you pass are labeled `user_override_unverified`.
 
-The risk and confidence scores are estimates. For example, a confidence score
-of 0.8 doesn't mean the prediction has an 80% chance of being right. You'll need
-to test the model and these scoring rules on your own data.
-
-### A few things to know about the data
-
-Weather comes from [Open-Meteo](https://open-meteo.com). If the request fails,
-the code returns made-up fallback weather and labels it that way. That fallback
-weather isn't used to adjust the final risk score; the score uses the image
-model alone.
-
-The satellite code is still a placeholder. It returns made-up NDVI values,
-which aren't used to adjust the disease score. NDVI is a number that describes
-how green or dense vegetation is. You can add a real source in
-`folianet/features/satellite.py`, or pass your own value with `ndvi`.
-A value you supply is labeled `user_override_unverified`; it isn't treated as
-data downloaded from a satellite.
-
-Weather is needed for the environmental part of the risk score. If real weather
-is available, real or user-supplied NDVI can also adjust that part of the score.
-Leaf wetness is estimated from humidity and rain, not measured by a field sensor.
-
-Check `details.provenance`, `details.data_sources`, and `details.fusion_weights`
-to see where the values came from and what was used in the final score.
+To see what went into a score, check `details.provenance`, `details.data_sources`,
+and `details.fusion_weights`.
 
 ## Train a model
-
-Install the full requirements in your virtual environment:
 
 ```bash
 pip install -r requirements.txt
 ```
 
-Follow [data/README.md](data/README.md) to prepare your labeled images. Set
-`data.root` in `configs/default.yaml` to your image folder, then run:
+Set up your images using [data/README.md](data/README.md), point `data.root` in
+`configs/default.yaml` at them, then run:
 
 ```bash
 python -m folianet.train --config configs/default.yaml
 ```
 
-This saves the trained model to `checkpoints/folianet_best.pt`, along with its
-class names and settings.
+The model saves to `checkpoints/folianet_best.pt`.
 
-Keep `model.tabular_dim: 0`. The model code has an optional branch for extra
-inputs, but the current training and prediction code only passes images to the
-model. Using that branch would need more work. The predictor rejects checkpoints
-that have it enabled.
+Leave `model.tabular_dim` at `0`. There's an unfinished branch in the model for
+extra inputs, but nothing uses it yet, and the predictor won't load a
+checkpoint that has it turned on.
 
-If you already have a checkpoint, only load one you trust. It needs `state_dict`
-and `classes`, with compatible `backbone`, `img_size`, and `tabular_dim` settings.
-A checkpoint is the saved file containing the model's learned weights.
+Only load checkpoints (saved model files) you trust.
 
 ## Predict from the terminal
-
-Run this from the repo folder after training:
 
 ```bash
 python -m scripts.predict_example \
   --image path/to/leaf.jpg --lat 40.0 --lon -88.2 --date 2024-07-15
 ```
 
-Replace the photo path, coordinates, and date with your own. The default model
-path is `checkpoints/folianet_best.pt`. Use `--checkpoint path/to/model.pt` if
-your file is somewhere else. You can also add `--ndvi 0.5` to supply an NDVI value.
+Add `--checkpoint path/to/model.pt` if your model is somewhere else, or
+`--ndvi 0.5` to pass your own NDVI.
 
-## Use the prediction API
-
-Start the server:
+## Use the API
 
 ```bash
 python -m uvicorn api.main:app --reload
 ```
 
-Then send a photo from another terminal:
+Then in another terminal:
 
 ```bash
 curl -X POST http://127.0.0.1:8000/predict \
@@ -144,75 +109,67 @@ curl -X POST http://127.0.0.1:8000/predict \
   -F lat=40.0 -F lon=-88.2 -F date=2024-07-15
 ```
 
-The API uses the same default checkpoint path. To use a different file, set
-`FOLIANET_CHECKPOINT` before starting the server.
+Set `FOLIANET_CHECKPOINT` to use a different model file. Latitude, longitude,
+and date have to be valid, and `ndvi` (optional) has to be between -1 and 1.
 
-Latitude must be between -90 and 90, longitude between -180 and 180, and the date
-must be valid. If you include `ndvi`, it must be a finite number between -1 and 1.
+A real prediction says `mode: "trained_model"` and `is_prediction: true`, and has:
 
-A prediction response says `mode: "trained_model"` and `is_prediction: true`.
-It includes:
+- `risk_score`, `risk_score_pct`, `risk_band`: how risky it looks
+- `confidence`: score and level
+- `likely_stressor`: the disease, crop, and pathogen
+- `recommended_action`: what to do next
+- `details`: class probabilities, weather, NDVI, and where everything came from
 
-- `risk_score`, `risk_score_pct`, and `risk_band`: the estimated risk.
-- `confidence`: the model's confidence score and level.
-- `likely_stressor`: the possible disease, crop, and pathogen.
-- `recommended_action`: a suggestion based on the disease and risk band.
-- `details`: class probabilities, weather, NDVI, data sources, and scoring weights.
+`likely_stressor` always picks the top disease class, even if "healthy" scored
+higher, so it's a thing to check, not a diagnosis. Look at the healthy
+probability and risk score too.
 
-`details.model_version` is the code version. It doesn't identify a specific
-trained checkpoint or tell you how well that checkpoint was tested.
+`details.model_version` is the code version, not the specific checkpoint.
 
-`likely_stressor` selects the highest-probability non-healthy class whenever
-one exists, even if a healthy class is the image model's top result. It names a
-candidate disease to inspect; it does not establish that disease is present.
-Check the healthy class probabilities and risk score alongside this field.
+Errors:
 
-If something goes wrong, the API returns these status codes:
-
-| Code | What it means |
+| Code | Meaning |
 | --- | --- |
-| 400 | The uploaded image couldn't be read. |
-| 422 | A required input is missing or invalid. |
-| 503 | The checkpoint is missing or the model couldn't load. |
-| 500 | Something failed while running the prediction. Check the server logs. |
+| 400 | Couldn't read the image. |
+| 422 | Missing or invalid input. |
+| 503 | No model file, or it didn't load. |
+| 500 | Prediction failed. Check the server logs. |
 
-`/predict` won't return the made-up example if the model is missing.
-`/health` only checks that the service is running, not that the model is ready.
+`/predict` never falls back to the fake example. `/health` only checks that the
+server is up, not the model.
 
-## Where things are
+## Project layout
 
-| File or folder | What's in it |
+| Path | What's there |
 | --- | --- |
-| `folianet/diseases.py` | Disease names and the rules for favorable conditions. |
-| `folianet/data/` | Dataset loading and preparation helpers. |
-| `folianet/features/` | Weather, NDVI, and environmental scoring. |
-| `folianet/models/fusion_model.py` | The image model and optional extra-input branch. |
-| `folianet/train.py` | Model training. |
-| `folianet/inference.py` | Predictions and final scores. |
-| `folianet/recommend.py` | Advice for each disease and risk band. |
-| `folianet/example.py` | The made-up response example. |
-| `api/main.py` | The HTTP API. |
-| `tests/` | Automated tests. |
+| `folianet/diseases.py` | Disease list and weather rules |
+| `folianet/data/` | Dataset loading |
+| `folianet/features/` | Weather, NDVI, and weather scoring |
+| `folianet/models/fusion_model.py` | The image model |
+| `folianet/train.py` | Training |
+| `folianet/inference.py` | Predictions and scoring |
+| `folianet/recommend.py` | Advice text |
+| `folianet/example.py` | The fake example |
+| `api/main.py` | The API |
+| `tests/` | Tests |
 
-## Run the tests
+## Tests
 
 ```bash
 pip install -r requirements-demo.txt
 python -m pytest -q
 ```
 
-These tests check the example, API inputs and errors, disease rules, and how
-real and fallback data are handled. Some API tests use a stand-in predictor.
-They don't test a trained model's accuracy, the full trained-model prediction
-path, or whether the weather and satellite services work.
+These cover the example, API inputs and errors, disease rules, and fallback data.
+They don't test model accuracy, a full trained-model prediction, or the live
+weather and satellite services.
 
-## Before using this in a field
+## Using it in a real field
 
-FoliaNet is meant to help with scouting. Confirm what you find with a local
-agronomist or extension service before deciding on treatment. Test your trained
-model and scoring thresholds on your own field data. This repo doesn't provide
-verified accuracy numbers or field-validation results.
+This is a scouting helper, not a diagnosis. Check with a local agronomist or
+extension service before treating anything, and test the model on your own
+fields first. There are no verified accuracy or field results here.
 
 ## License
 
-MIT [LICENSE](LICENSE). © Grace Fokam.
+[MIT](LICENSE). © Grace Fokam.

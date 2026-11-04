@@ -1,4 +1,4 @@
-"""Test the example and the rules for real, made-up, and user-supplied data."""
+"""Tests for the example and for handling real, fake, and user-supplied data."""
 
 import json
 import subprocess

@@ -1,6 +1,5 @@
-"""Run one prediction using a trained checkpoint.
+"""Run one prediction with a trained model.
 
-From the repo folder:
     python -m scripts.predict_example --image path/to/leaf.jpg \
         --lat 40.0 --lon -88.2 --date 2024-07-15"""
 

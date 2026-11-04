@@ -1,11 +1,8 @@
-"""The NDVI data source is still a placeholder.
+"""NDVI (how green and dense plants are). Still a placeholder.
 
-NDVI describes how green or dense vegetation is. This file currently returns
-repeatable made-up values with data_available=False. The predictor does not
-use these values to adjust disease scores.
-
-To use real data, add a source in _fetch_real_ndvi(). Possible sources include
-Sentinel Hub (https://docs.sentinel-hub.com) and Google Earth Engine."""
+For now this returns fake values with data_available=False, and they aren't
+used in the score. To add real data, fill in _fetch_real_ndvi(). Sentinel Hub
+(https://docs.sentinel-hub.com) or Google Earth Engine would work."""
 
 from dataclasses import dataclass
 from datetime import date, datetime
@@ -15,7 +12,7 @@ import hashlib
 
 @dataclass
 class SatelliteFeatures:
-    ndvi: float                 # -1..1 (vegetation density / vigor)
+    ndvi: float                 # -1 to 1
     data_available: bool = True
     source: str = "synthetic"
 
@@ -34,10 +31,9 @@ def _synthetic_ndvi(lat: float, lon: float, target: date) -> float:
 
 
 def _fetch_real_ndvi(lat: float, lon: float, target: date) -> Optional[float]:
-    """Add a satellite data source here. Return None if no data is available.
+    """TODO: hook up a real satellite source. Return None if there's no data.
 
-    For example, Sentinel Hub can return NDVI for a small area around the
-    coordinates. Keep any API keys in environment variables, not in this file.
+    Keep API keys in environment variables, not here.
     """
     return None
 

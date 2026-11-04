@@ -1,10 +1,6 @@
-"""Get recent weather from Open-Meteo for a location and date.
+"""Gets the last week of weather from Open-Meteo (https://open-meteo.com/en/docs).
 
-The code calculates temperature, humidity, rain, estimated leaf wetness, and
-growing-degree-days. If the request fails, it returns repeatable made-up values
-and sets data_available=False. Those values are not real weather observations.
-
-API docs: https://open-meteo.com/en/docs"""
+If the request fails, it returns fake values with data_available=False."""
 
 from datetime import date, datetime, timedelta
 from typing import Union
@@ -16,7 +12,7 @@ from folianet.features.environment import WeatherFeatures
 ARCHIVE_URL = "https://archive-api.open-meteo.com/v1/archive"
 FORECAST_URL = "https://api.open-meteo.com/v1/forecast"
 HOURLY_VARS = "temperature_2m,relative_humidity_2m,precipitation"
-GDD_BASE_C = 10.0   # corn/wheat-ish base temperature for GDD
+GDD_BASE_C = 10.0   # rough base temp for corn and wheat
 
 
 def _to_date(d: Union[str, date, datetime]) -> date:
@@ -28,7 +24,7 @@ def _to_date(d: Union[str, date, datetime]) -> date:
 
 
 def _synthetic(lat: float, lon: float, target: date) -> WeatherFeatures:
-    """Make repeatable fallback values when real weather is unavailable."""
+    """Fake but repeatable weather for when the real request fails."""
     seed = int(hashlib.sha256(f"{lat:.2f}{lon:.2f}{target}".encode()).hexdigest(), 16)
     r = (seed % 1000) / 1000.0
     temp = 12 + 18 * r                     # 12..30 C
@@ -45,15 +41,15 @@ def fetch_weather(
     target_date: Union[str, date, datetime],
     window_days: int = 7,
 ) -> WeatherFeatures:
-    """Get recent weather ending on target_date and calculate the averages."""
+    """Get weather for the days up to target_date and average it."""
     target = _to_date(target_date)
     if window_days < 1:
         raise ValueError("window_days must be positive")
-    # Open-Meteo includes both start_date and end_date.
+    # Open-Meteo includes both the start and end dates.
     start = target - timedelta(days=window_days - 1)
 
     try:
-        import requests  # imported lazily so the package loads without it
+        import requests  # only needed here
 
         use_archive = target <= date.today() - timedelta(days=5)
         url = ARCHIVE_URL if use_archive else FORECAST_URL
@@ -71,8 +67,7 @@ def fetch_weather(
         temps = hourly.get("temperature_2m", [])
         hums = hourly.get("relative_humidity_2m", [])
         precs = hourly.get("precipitation", [])
-        # Missing or mismatched hours cannot support a complete window.
-        # Do not silently turn missing rain into zero or shift hourly pairs.
+        # If any hours are missing or don't line up, don't guess. Fall back.
         if not temps or len(temps) != len(hums) or len(temps) != len(precs):
             raise ValueError("incomplete weather response")
         if any(v is None or not math.isfinite(v) for series in (temps, hums, precs)
@@ -82,15 +77,15 @@ def fetch_weather(
         temp_mean = sum(temps) / len(temps)
         hum_mean = sum(hums) / len(hums)
         precip_total = sum(precs)
-        # Estimate wet hours from humidity of at least 90% or rain.
+        # Count an hour as wet if humidity is 90%+ or it rained.
         wetness = sum(
             1 for i in range(min(len(hums), len(precs)))
             if hums[i] >= 90 or precs[i] > 0.1
         )
-        # Estimate growing-degree-days from the average temperature.
+        # Rough growing degree days from the average temp.
         gdd = max(0.0, temp_mean - GDD_BASE_C) * window_days
         return WeatherFeatures(temp_mean, hum_mean, precip_total, float(wetness), gdd, True)
 
     except Exception:
-        # If the request fails, return labeled made-up weather.
+        # Request failed, so use fake weather (it's labeled).
         return _synthetic(lat, lon, target)

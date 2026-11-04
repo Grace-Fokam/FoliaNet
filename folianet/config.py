@@ -1,4 +1,4 @@
-"""Read the YAML settings so the code can use names like cfg.data.root."""
+"""Loads the YAML config so you can write cfg.data.root."""
 
 from types import SimpleNamespace
 from pathlib import Path

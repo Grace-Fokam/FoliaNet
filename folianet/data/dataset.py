@@ -1,10 +1,9 @@
-"""Load training images from folders named after each disease or healthy class.
+"""Loads training images from one folder per class.
 
-For example, root can be data/crop_images, with folders such as
-Corn_(maize)___Common_rust_ and Corn_(maize)___healthy inside it.
+e.g. data/crop_images/Corn_(maize)___Common_rust_/ and
+data/crop_images/Corn_(maize)___healthy/
 
-The crops setting filters these folder names by words like Corn or Wheat.
-You can change that setting without moving the images."""
+`crops` filters folders by name (like "Corn" or "Wheat")."""
 
 from pathlib import Path
 from typing import List, Tuple
@@ -42,8 +41,7 @@ class CropDiseaseDataset(Dataset):
         self.root = Path(root)
         if not self.root.exists():
             raise FileNotFoundError(
-                f"Dataset root '{root}' not found. See folianet/data/download.py "
-                f"or data/README.md for how to prepare a dataset."
+                f"Can't find '{root}'. See data/README.md to set up a dataset."
             )
         keywords = [c.lower() for c in crops]
         class_dirs = sorted(
@@ -52,8 +50,7 @@ class CropDiseaseDataset(Dataset):
         )
         if not class_dirs:
             raise RuntimeError(
-                f"No class folders under '{root}' match crops={crops}. "
-                f"Check the dataset layout."
+                f"No folders in '{root}' match crops={crops}."
             )
         self.classes = [d.name for d in class_dirs]
         self.class_to_idx = {name: i for i, name in enumerate(self.classes)}
@@ -63,10 +60,10 @@ class CropDiseaseDataset(Dataset):
             for f in d.rglob("*"):
                 if f.suffix.lower() in _EXTS:
                     self.samples.append((f, idx))
-        # Keep image order the same when loading the training and validation sets.
+        # Same order every time so the train/val split matches.
         self.samples.sort(key=lambda s: str(s[0]))
         if not self.samples:
-            raise RuntimeError(f"No images found under matching class folders in '{root}'.")
+            raise RuntimeError(f"No images found in the class folders under '{root}'.")
         self.transform = transform
 
     def __len__(self) -> int:

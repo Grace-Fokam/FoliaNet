@@ -2,9 +2,9 @@ project: FoliaNet
 seed: 42
 
 data:
-  # Folder containing one image folder for each disease or healthy class.
+  # Folder with one subfolder per class.
   root: data/crop_images
-  # Only include image folders with these crop names.
+  # Only use folders with these crop names.
   crops: ["Corn", "Wheat"]
   img_size: 224
   val_split: 0.15
@@ -14,7 +14,7 @@ data:
 model:
   backbone: efficientnet_b0    # or "resnet18"
   pretrained: true
-  # Keep this at 0. The current trainer and predictor only pass images.
+  # Keep at 0. Extra inputs aren't hooked up yet.
   tabular_dim: 0
   dropout: 0.3
 
@@ -24,8 +24,8 @@ train:
   weight_decay: 0.0001
   checkpoint_dir: checkpoints
 
-# Default weights for combining image and weather scores.
-# The current predictor uses its own defaults; it does not read this section.
+# How much the image vs weather counts. Not read yet (the predictor
+# has the same numbers built in).
 fusion:
   image_weight: 0.6
   env_weight: 0.4
