@@ -7,7 +7,8 @@ disease to spread.
 You get back a risk score, a confidence score, the likely disease, and what to
 check next. Built with PyTorch (EfficientNet-B0) and FastAPI.
 
-I wrote the original in September 2023 and cleaned it up for GitHub in June 2026.
+I wrote the original in September 2023 and cleaned it up for GitHub in June 2026,
+then did some more cleanup in October and November 2026.
 
 ## Original results (2023)
 
